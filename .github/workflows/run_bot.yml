@@ -2,8 +2,12 @@ name: DART Disclosure Bot
 
 on:
   schedule:
-    - cron: '0 9 * * 1-5' # 월~금, 한국 시간 오후 6시 (UTC 09:00)
-  workflow_dispatch:      # 수동 실행 버튼
+    - cron: '0 9 * * 1-5'
+  workflow_dispatch:
+
+# 서버에 파일을 쓸 수 있는 권한을 부여합니다.
+permissions:
+  contents: write
 
 jobs:
   run_dart_bot:
@@ -19,11 +23,20 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install OpenDartReader requests pandas
 
       - name: Run main.py
         env:
           DART_TOKEN: ${{ secrets.DART_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: python main.py
+
+      # 추가: 생성된 history.csv 파일을 레포지토리에 커밋하고 푸시합니다.
+      - name: Commit and Push history.csv
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add history.csv
+          # 변경사항이 있을 때만 커밋합니다.
+          git commit -m "Update disclosure history log [skip ci]" || echo "No changes to commit"
+          git push
